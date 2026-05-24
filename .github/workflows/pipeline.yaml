@@ -3,7 +3,7 @@ name: Tourism Project Pipeline
 on:
   push:
     branches:
-      - main
+      - main  # Automatically triggers on push to the main branch
 
 jobs:
 
@@ -12,12 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Dependencies
-        run: pip install -r requirements.txt
-        working-directory: deployment
+        run: pip install -r ./tourism_project/deployment/requirements.txt
       - name: Upload Dataset to Hugging Face Hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python model_building/data_register.py
+        run: python ./tourism_project/model_building/data_register.py
 
   data-prep:
     needs: register-dataset
@@ -25,12 +24,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Dependencies
-        run: pip install -r requirements.txt
-        working-directory: deployment
+        run: pip install -r ./tourism_project/deployment/requirements.txt
       - name: Run Data Preparation
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python model_building/prep.py
+        run: python ./tourism_project/model_building/prep.py
 
   model-training:
     needs: data-prep
@@ -38,17 +36,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Dependencies
-        run: pip install -r requirements.txt
-        working-directory: deployment
+        run: pip install -r ./tourism_project/deployment/requirements.txt
       - name: Start MLflow Server
         run: |
-          pip install mlflow # Ensuring mlflow is installed globally in the runner environment
-          nohup mlflow ui --host 0.0.0.0 --port 5000 &
-          sleep 5
+          pip install mlflow
+          nohup mlflow ui --host 0.0.0.0 --port 5000 &  # Run MLflow UI in the background
+          sleep 5  # Wait a moment for the server to start
       - name: Model Building
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python model_building/train.py
+        run: python ./tourism_project/model_building/train.py
 
   deploy-hosting:
     needs: [register-dataset, data-prep, model-training]
@@ -56,9 +53,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Dependencies
-        run: pip install -r requirements.txt
-        working-directory: deployment
+        run: pip install -r ./tourism_project/deployment/requirements.txt
       - name: Push files to Frontend Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python hosting/hosting.py
+        run: python ./tourism_project/hosting/hosting.py
