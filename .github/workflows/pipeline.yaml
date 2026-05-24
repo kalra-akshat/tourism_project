@@ -3,7 +3,7 @@ name: Tourism Project Pipeline
 on:
   push:
     branches:
-      - main  # Automatically triggers on push to the main branch
+      - main
 
 jobs:
 
@@ -11,12 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      # --- THIS IS THE DEBUG STEP ---
+      - name: List files to find requirements.txt
+        run: |
+          echo "=== WHERE ARE WE? ==="
+          pwd
+          echo "=== WHAT FILES ARE HERE? ==="
+          find . -name "requirements.txt"
+          echo "=== FULL REPOSITORY STRUCTURE ==="
+          ls -R
+      # -------------------------------
+
       - name: Install Dependencies
         run: pip install -r ./tourism_project/deployment/requirements.txt
       - name: Upload Dataset to Hugging Face Hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python ./tourism_project/model_building/data_register.py
+
+# (You can leave the rest of your data-prep, model-training, and deploy-hosting jobs as they are for now)
 
   data-prep:
     needs: register-dataset
